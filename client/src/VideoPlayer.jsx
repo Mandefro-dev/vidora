@@ -16,6 +16,10 @@ const VideoPlayer = () => {
           className="react-player"
         >
           <source src="http://localhost:8000/api/stream" type="video/mp4" />
+          {/* <source
+            src="http://localhost:8000/processed/processed-1770560756351.mp4"
+            type="video/mp4"
+          /> */}
           Your browser does not support the video tag.
         </video>
       </div>
