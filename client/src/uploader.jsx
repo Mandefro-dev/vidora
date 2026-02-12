@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import axios from "axios";
 import { FiUploadCloud, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 
-const Uploader = () => {
+// Pass onUploadComplete as a prop
+const Uploader = ({ onUploadComplete }) => {
   const [file, setFile] = useState(null);
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState("idle"); // idle, uploading, success, error
+  const [status, setStatus] = useState("idle");
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -17,25 +18,35 @@ const Uploader = () => {
     if (!file) return;
 
     const formData = new FormData();
-    formData.append("file", file); // Must match the backend 'busboy' field name
+    formData.append("file", file); // Must match backend 'busboy' setup
 
     setStatus("uploading");
 
     try {
-      await axios.post("http://localhost:8000/api/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
+      const response = await axios.post(
+        "http://localhost:8000/api/upload",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total,
+            );
+            setProgress(percentCompleted);
+          },
         },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total,
-          );
-          setProgress(percentCompleted);
-        },
-      });
+      );
+
       setStatus("success");
+
+      // IMPORTANT: Trigger the callback with the HLS URL from the backend
+      if (onUploadComplete) {
+        onUploadComplete(response.data.videoUrl);
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Upload Error:", error);
       setStatus("error");
     }
   };
@@ -48,7 +59,7 @@ const Uploader = () => {
         <input
           type="file"
           id="file-input"
-          accept="video/mp4"
+          accept="video/*" // Support all video types for conversion
           onChange={handleFileChange}
           hidden
         />
@@ -57,7 +68,7 @@ const Uploader = () => {
           <p>{file ? file.name : "Click to Select Video"}</p>
         </label>
 
-        {file && (
+        {file && status !== "uploading" && (
           <button onClick={handleUpload} className="upload-btn">
             Start Upload
           </button>
@@ -73,7 +84,7 @@ const Uploader = () => {
 
       {status === "success" && (
         <div className="status-msg success">
-          <FiCheckCircle /> Upload Complete!
+          <FiCheckCircle /> Uploaded! Converting to HLS...
         </div>
       )}
 

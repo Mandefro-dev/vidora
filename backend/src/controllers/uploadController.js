@@ -1,38 +1,47 @@
 import { handleFileUpload } from "../services/uploadService.js";
-import { convertToMp4 } from "../services/transcodeService.js";
+import { v4 as uuidv4 } from "uuid";
+import { convertToHLS } from "../services/transcodeService.js";
 import path from "path";
+
 export const uploadVideo = async (req, res) => {
   try {
     if (
       !req.headers["content-type"] ||
       !req.headers["content-type"].includes("multipart/form-data")
     ) {
-      return res.status(400).json({
-        error: "Content-Type must be multipart/form-data",
-      });
+      return res
+        .status(400)
+        .json({ error: "Content-Type must be multipart/form-data" });
     }
 
-    console.log("starting upload stream...");
-
+    console.log("Starting upload stream...");
     const result = await handleFileUpload(req);
+
+    const videoId = uuidv4();
+    console.log(`Generating video ID: ${videoId}`);
+
+    const hlsUrl = `http://localhost:8000/hls/${videoId}/index.m3u8`;
+
     res.status(202).json({
-      message: "upload complete,processing video in background.",
-      videoId: result.file,
+      message: "Upload complete. HLS processing started in background.",
+      videoId: videoId,
+      videoUrl: hlsUrl,
     });
-    const inputPath = result.path;
-    const outputFileName = `processed-${Date.now()}`;
 
-    try {
-      console.log("Step 2: Starting Transcoding Factory...");
-      const processedPath = await convertToMp4(inputPath, outputFileName);
-      console.log("Video is ready at:", processedPath);
-    } catch (error) {
-      console.error("Background trasnscoding failed", error.message);
-    }
+    (async () => {
+      try {
+        console.log(`[Background] Starting HLS Factory for: ${videoId}`);
+        const inputPath = result.path;
 
-    res.status(201).json(result);
+        await convertToHLS(inputPath, videoId);
+
+        console.log(`[Background] HLS conversion finished for: ${videoId}`);
+      } catch (error) {
+        console.error(`[Background] HLS failed for ${videoId}:`, error.message);
+      }
+    })();
   } catch (error) {
-    console.error("Upload Controller error..", error.message);
+    console.error("Upload Controller error:", error.message);
     if (!res.headersSent) {
       res.status(500).json({
         error: "Upload Failed",

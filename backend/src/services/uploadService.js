@@ -12,8 +12,7 @@ export const handleFileUpload = (req) => {
     const bushboy = Busboy({ headers: req.headers });
 
     let filePath = "";
-    let fileName = "";
-    5;
+    let safeFileName = "";
 
     bushboy.on("file", (fieldName, fileStream, info) => {
       const { filename, mimeType } = info;
@@ -23,8 +22,8 @@ export const handleFileUpload = (req) => {
         return reject.apply(new Error("Only MP4 videos are allowed."));
       }
 
-      fileName = `raw-${Date.now()}-${fileName}`;
-      filePath = path.join(__dirname, "../../uploads/temp", fileName);
+      safeFileName = `raw-${Date.now()}-${filename.replace(/\s+/g, "-")}`;
+      filePath = path.join(__dirname, "../../uploads/temp", safeFileName);
       const writeStream = fs.createWriteStream(filePath);
 
       fileStream.pipe(writeStream); //network ->bushboy ->Disk
@@ -36,12 +35,17 @@ export const handleFileUpload = (req) => {
     });
 
     bushboy.on("finish", () => {
-      (console.log("Upload complete"),
+      // Only resolve if we actually processed a file
+      if (safeFileName) {
+        console.log("Upload complete");
         resolve({
           message: "Upload successful",
-          file: fileName,
+          file: safeFileName,
           path: filePath,
-        }));
+        });
+      } else {
+        reject(new Error("No file uploaded"));
+      }
     });
     bushboy.on("error", (err) => {
       console.error("Bushboy Error", err);
