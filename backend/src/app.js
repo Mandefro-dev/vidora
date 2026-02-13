@@ -11,8 +11,18 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(
   cors({
-    origin: "*",
-    methods: ["GET", "POST"],
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "OPTIONS"],
+    // ADD Range and Accept to allowed headers
+    allowedHeaders: ["Content-Type", "Range", "Accept"],
+    //  range headers so the frontend player can read them
+    exposedHeaders: [
+      "Content-Range",
+      "Accept-Ranges",
+      "Content-Length",
+      "Content-Type",
+    ],
+    credentials: true,
   }),
 );
 

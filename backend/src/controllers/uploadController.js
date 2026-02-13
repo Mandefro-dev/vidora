@@ -1,7 +1,9 @@
 import { handleFileUpload } from "../services/uploadService.js";
 import { v4 as uuidv4 } from "uuid";
 import { convertToHLS } from "../services/transcodeService.js";
+import { addVideo, updateVideoStatus } from "../services/dbService.js";
 import path from "path";
+import { title } from "process";
 
 export const uploadVideo = async (req, res) => {
   try {
@@ -21,11 +23,18 @@ export const uploadVideo = async (req, res) => {
     console.log(`Generating video ID: ${videoId}`);
 
     const hlsUrl = `http://localhost:8000/hls/${videoId}/index.m3u8`;
+    const newVideo = {
+      id: videoId,
+      title: result.file.replace("raw-", "").replace(".mp4", ""),
+      status: "processing",
+      url: hlsUrl,
+      createdAt: new Date().toISOString(),
+    };
+    await addVideo(newVideo);
 
     res.status(202).json({
       message: "Upload complete. HLS processing started in background.",
-      videoId: videoId,
-      videoUrl: hlsUrl,
+      ...newVideo,
     });
 
     (async () => {
@@ -34,10 +43,12 @@ export const uploadVideo = async (req, res) => {
         const inputPath = result.path;
 
         await convertToHLS(inputPath, videoId);
+        await updateVideoStatus(videoId, "ready");
 
         console.log(`[Background] HLS conversion finished for: ${videoId}`);
       } catch (error) {
         console.error(`[Background] HLS failed for ${videoId}:`, error.message);
+        await updateVideoStatus(videoId, "failed");
       }
     })();
   } catch (error) {

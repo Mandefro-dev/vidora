@@ -1,0 +1,32 @@
+{
+  "videos": [
+    {
+      "id": "4ac7d630-8e8d-4e96-98b2-606f66ae92d2",
+      "title": "1770989089743-video_2026-01-17_16-16-52",
+      "status": "ready",
+      "url": "http://localhost:8000/hls/4ac7d630-8e8d-4e96-98b2-606f66ae92d2/index.m3u8",
+      "createdAt": "2026-02-13T13:24:50.004Z"
+    },
+    {
+      "id": "a6333fd2-f108-456b-937b-526b7250a896",
+      "title": "1770988719585-3191884-uhd_2560_1440_25fps-(1)",
+      "status": "failed",
+      "url": "http://localhost:8000/hls/a6333fd2-f108-456b-937b-526b7250a896/index.m3u8",
+      "createdAt": "2026-02-13T13:18:40.005Z"
+    },
+    {
+      "id": "b5a0bf3e-1587-47ad-913e-b4dbf4abfa1f",
+      "title": "1770987179152-video_2026-01-17_16-16-52",
+      "status": "ready",
+      "url": "http://localhost:8000/hls/b5a0bf3e-1587-47ad-913e-b4dbf4abfa1f/index.m3u8",
+      "createdAt": "2026-02-13T12:52:59.452Z"
+    },
+    {
+      "id": "eff4f3bb-8e85-4460-965d-744df63fb6dd",
+      "title": "1770986699484-video_2026-01-17_16-16-52",
+      "status": "processing",
+      "url": "http://localhost:8000/hls/eff4f3bb-8e85-4460-965d-744df63fb6dd/index.m3u8",
+      "createdAt": "2026-02-13T12:44:59.766Z"
+    }
+  ]
+}

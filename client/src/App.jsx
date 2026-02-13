@@ -1,112 +1,110 @@
-import React, { useState } from "react";
-import Uploader from "./Uploader";
-import VideoPlayer from "./VideoPlayer";
-import { FiPlayCircle, FiCopy, FiCheck, FiX } from "react-icons/fi";
+import React, { useState, useEffect } from "react";
+import { FiPlay, FiClock, FiCheckCircle, FiFilm, FiX } from "react-icons/fi";
 import { AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import Uploader from "./uploader";
+import VideoPlayer from "./VideoPlayer";
+import { fetchVideos } from "./api";
 import "./App.css";
 
 function App() {
-  // We store a list of videos here.
-  // In Phase 6, we will fetch this list from the backend/database.
   const [videos, setVideos] = useState([]);
-  const [activeVideo, setActiveVideo] = useState(null); // The video currently playing in modal
+  const [activeVideo, setActiveVideo] = useState(null);
 
-  const handleUploadComplete = (videoData) => {
-    // Add the new video to our list
-    const newVideo = {
-      id: videoData.videoId,
-      title: `Video ${videoData.videoId.substring(0, 8)}...`, // Placeholder title
-      url: videoData.videoUrl,
-      status: "processing", // It starts as processing
-      timestamp: new Date(),
+  //  Processing -> Ready
+  useEffect(() => {
+    const loadVideos = async () => {
+      try {
+        const data = await fetchVideos();
+        // Simple check to avoid unnecessary re-renders would go here in production
+        setVideos(data);
+      } catch (e) {
+        console.error("Fetch error", e);
+      }
     };
 
-    // Add to top of list
-    setVideos([newVideo, ...videos]);
+    loadVideos(); // Initial load
+    const interval = setInterval(loadVideos, 5000); // Poll every 5s
+    return () => clearInterval(interval);
+  }, []);
 
-    // Simulate "Processing" finishing after 10 seconds (Mock for UI)
-    setTimeout(() => {
-      setVideos((prev) =>
-        prev.map((v) => (v.id === newVideo.id ? { ...v, status: "ready" } : v)),
-      );
-    }, 10000);
-  };
-
-  const copyToClipboard = (url) => {
-    navigator.clipboard.writeText(url);
-    alert("Stream URL copied! You can paste this in any HLS player.");
+  // Handle immediate UI update after upload
+  const handleUploadSuccess = (newVideo) => {
+    setVideos((prev) => [newVideo, ...prev]);
   };
 
   return (
     <div className="app-container">
       {/* Header */}
       <header className="header">
-        <div className="brand">StreamHost ⚡</div>
-        <div className="user-profile">
-          <span className="badge">Free Tier</span>
+        <div className="brand">
+          <span style={{ marginRight: "10px" }}>⚡</span>
+          NodeStream{" "}
+          <span style={{ color: "white", fontWeight: 300, opacity: 0.5 }}>
+            Pro
+          </span>
         </div>
+        <div className="badge ready">v1.0.0 Live</div>
       </header>
 
-      {/* Upload Section */}
-      <section>
-        <Uploader onUploadComplete={handleUploadComplete} />
-      </section>
+      {/* upload Component */}
+      <Uploader onUploadSuccess={handleUploadSuccess} />
 
-      {/* Video Gallery */}
-      <section>
-        <h3 style={{ marginTop: "40px", marginBottom: "20px" }}>
-          Your Library
-        </h3>
+      {/* Video Gallery Grid */}
+      <h2 className="section-title">
+        <FiFilm /> Your Library
+      </h2>
 
-        {videos.length === 0 ? (
-          <p style={{ color: "#94a3b8", textAlign: "center" }}>
-            No videos yet. Upload one above!
-          </p>
-        ) : (
-          <div className="grid">
-            {videos.map((video) => (
-              <motion.div
-                key={video.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="card"
-              >
-                {/* Thumbnail / Play Trigger */}
-                <div
-                  className="card-thumb"
-                  onClick={() => setActiveVideo(video)}
-                >
-                  <FiPlayCircle className="play-icon" />
-                </div>
-
-                {/* Info */}
-                <div className="card-body">
-                  <div className="card-title">{video.title}</div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <span className={`badge ${video.status}`}>
-                      {video.status === "processing"
-                        ? "Processing..."
-                        : "Ready"}
-                    </span>
-                    <button
-                      className="icon-btn"
-                      onClick={() => copyToClipboard(video.url)}
-                    >
-                      <FiCopy />
-                    </button>
+      <div className="grid">
+        <AnimatePresence>
+          {videos.map((video) => (
+            <motion.div
+              key={video.id}
+              layout
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="card"
+              onClick={() => video.status === "ready" && setActiveVideo(video)}
+            >
+              {/* Thumbnail / Status Icon */}
+              <div className="card-thumb">
+                {video.status === "ready" ? (
+                  <div className="play-overlay">
+                    <FiPlay size={24} color="white" />
                   </div>
+                ) : (
+                  <div style={{ textAlign: "center", color: "var(--warning)" }}>
+                    <FiClock className="spin" size={32} />
+                    <div style={{ fontSize: "0.8rem", marginTop: "10px" }}>
+                      Processing...
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Card Meta Data */}
+              <div className="card-body">
+                <div className="card-title">
+                  {video.title || "Untitled Video"}
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </section>
+                <div className="card-meta">
+                  <span>{new Date(video.createdAt).toLocaleDateString()}</span>
+                  <span className={`badge ${video.status}`}>
+                    {video.status === "ready" ? (
+                      <>
+                        <FiCheckCircle /> Ready
+                      </>
+                    ) : (
+                      "Encoding"
+                    )}
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
 
       {/* Video Player Modal */}
       <AnimatePresence>
@@ -120,32 +118,52 @@ function App() {
           >
             <motion.div
               className="modal-content"
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              onClick={(e) => e.stopPropagation()} // Don't close if clicking inside modal
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div
                 style={{
-                  padding: "10px",
-                  background: "#000",
-                  textAlign: "right",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "20px",
+                  alignItems: "center",
                 }}
               >
-                <FiX
+                <h3 style={{ margin: 0 }}>{activeVideo.title}</h3>
+                <button
                   onClick={() => setActiveVideo(null)}
-                  style={{ cursor: "pointer", color: "white" }}
-                  size={24}
-                />
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "white",
+                    cursor: "pointer",
+                  }}
+                >
+                  <FiX size={24} />
+                </button>
               </div>
 
-              {/* The Player Component */}
               <VideoPlayer src={activeVideo.url} />
 
-              <div style={{ padding: "20px" }}>
-                <h3>{activeVideo.title}</h3>
-                <p style={{ color: "#94a3b8", fontSize: "0.9rem" }}>
-                  Stream URL: {activeVideo.url}
-                </p>
+              <div
+                style={{
+                  padding: "20px",
+                  color: "var(--text-muted)",
+                  fontSize: "0.9rem",
+                }}
+              >
+                Stream URL:{" "}
+                <code
+                  style={{
+                    background: "rgba(255,255,255,0.1)",
+                    padding: "4px",
+                    borderRadius: "4px",
+                  }}
+                >
+                  {activeVideo.url}
+                </code>
               </div>
             </motion.div>
           </motion.div>

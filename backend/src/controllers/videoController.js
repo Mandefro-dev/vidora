@@ -2,6 +2,7 @@
 import fs from "fs";
 import { getFileStats, calculateRange } from "../services/streamService.js";
 import config from "../config/index.js";
+import { getVideos } from "../services/dbService.js";
 
 export const streamVideo = async (req, res) => {
   const range = req.headers.range;
@@ -35,4 +36,8 @@ export const streamVideo = async (req, res) => {
     console.error("Controller error", error.message);
     res.status(500).send("Internal server error");
   }
+};
+export const getAllVideos = async (req, res) => {
+  const videos = await getVideos();
+  res.status(200).json(videos);
 };

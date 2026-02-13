@@ -19,7 +19,7 @@ export const handleFileUpload = (req) => {
       console.log(`Receving file : ${filename}`);
       if (mimeType !== "video/mp4") {
         fileStream.resume();
-        return reject.apply(new Error("Only MP4 videos are allowed."));
+        return reject(new Error("Only MP4 videos are allowed."));
       }
 
       safeFileName = `raw-${Date.now()}-${filename.replace(/\s+/g, "-")}`;

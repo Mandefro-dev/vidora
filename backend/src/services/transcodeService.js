@@ -122,12 +122,11 @@ export const convertToHLS = (inputPath, videoId) => {
       "index.m3u8", // The Master Playlist
 
       "-var_stream_map",
-      "v:0,a:0 v:1,a:1",
+      "v:0,a:0,name:360p v:1,a:1,name:720p",
 
       path.join(outputDir, "stream_%v.m3u8"),
-      "-start_number",
-      "0",
-      masterPlaylist,
+      // "-start_number",
+      // "0",
     ]);
 
     ffmpeg.stderr.on("data", (data) => {
