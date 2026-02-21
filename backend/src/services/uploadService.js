@@ -21,6 +21,7 @@ export const handleFileUpload = (req) => {
         fileStream.resume();
         return reject(new Error("Only MP4 videos are allowed."));
       }
+      7;
 
       safeFileName = `raw-${Date.now()}-${filename.replace(/\s+/g, "-")}`;
       filePath = path.join(__dirname, "../../uploads/temp", safeFileName);

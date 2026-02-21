@@ -2,13 +2,18 @@ import express from "express";
 import path from "path";
 import cors from "cors";
 import { fileURLToPath } from "url";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+dotenv.config();
 import videoRouter from "./routes/videoRoutes.js";
 import config from "./config/index.js";
+import { error } from "console";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -30,6 +35,14 @@ app.use((req, res, next) => {
   console.log(`Incoming request ${req.method} ${req.url}`);
   next();
 });
+
+mongoose
+  .connect(config.mongo_uri)
+  .then(() => {
+    console.log("connected to mongoDB.");
+  })
+  .catch((error) => console.error("Mongodb connection error", error.message));
+
 app.use("/hls", express.static(path.join(__dirname, "../uploads/hls")));
 
 app.use(

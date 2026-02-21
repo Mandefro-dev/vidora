@@ -4,6 +4,7 @@ import { convertToHLS } from "../services/transcodeService.js";
 import { addVideo, updateVideoStatus } from "../services/dbService.js";
 import path from "path";
 import { title } from "process";
+import Video from "../models/Video.js";
 
 export const uploadVideo = async (req, res) => {
   try {
@@ -23,14 +24,15 @@ export const uploadVideo = async (req, res) => {
     console.log(`Generating video ID: ${videoId}`);
 
     const hlsUrl = `http://localhost:8000/hls/${videoId}/index.m3u8`;
-    const newVideo = {
+
+    const newVideo = new Video({
       id: videoId,
       title: result.file.replace("raw-", "").replace(".mp4", ""),
       status: "processing",
       url: hlsUrl,
-      createdAt: new Date().toISOString(),
-    };
-    await addVideo(newVideo);
+      visibilty: "public",
+    });
+    await newVideo.save();
 
     res.status(202).json({
       message: "Upload complete. HLS processing started in background.",
@@ -43,12 +45,17 @@ export const uploadVideo = async (req, res) => {
         const inputPath = result.path;
 
         await convertToHLS(inputPath, videoId);
-        await updateVideoStatus(videoId, "ready");
+        await Video.findOneAndUpdate({ videoId: videoId }, { status: "ready" });
+        // await updateVideoStatus(videoId, "ready");
 
         console.log(`[Background] HLS conversion finished for: ${videoId}`);
       } catch (error) {
         console.error(`[Background] HLS failed for ${videoId}:`, error.message);
-        await updateVideoStatus(videoId, "failed");
+        // await updateVideoStatus(videoId, "failed");
+        await Video.findOneAndUpdate(
+          { videoId: videoId },
+          { status: "failed" },
+        );
       }
     })();
   } catch (error) {

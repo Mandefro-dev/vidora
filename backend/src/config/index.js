@@ -8,5 +8,6 @@ const config = {
   port: process.env.PORT || 8000,
   videoPath: path.resolve(__dirname, "..", "..", "assets", "sample1.mp4"),
   chunkSize: 10 ** 6,
+  mongo_uri: process.env.MONGO_URI,
 };
 export default config;

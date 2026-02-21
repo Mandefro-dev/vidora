@@ -2,6 +2,7 @@
 import fs from "fs";
 import { getFileStats, calculateRange } from "../services/streamService.js";
 import config from "../config/index.js";
+import Video from "../models/Video.js";
 import { getVideos } from "../services/dbService.js";
 
 export const streamVideo = async (req, res) => {
@@ -38,6 +39,19 @@ export const streamVideo = async (req, res) => {
   }
 };
 export const getAllVideos = async (req, res) => {
-  const videos = await getVideos();
-  res.status(200).json(videos);
+  try {
+    const videos = await Video.find({}).sort({ createdAt: -1 });
+    res.status(200).json(
+      videos.map((vid) => ({
+        id: vid.videoId,
+        title: vid.title,
+        status: vid.status,
+        url: vid.url,
+        createdAt: vid.createdAt,
+      })),
+    );
+  } catch (error) {
+    console.error("Error fetching videos:", error);
+    res.status(500).json({ error: "could not fetch videos" });
+  }
 };
