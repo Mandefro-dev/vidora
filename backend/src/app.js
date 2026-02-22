@@ -4,10 +4,10 @@ import cors from "cors";
 import { fileURLToPath } from "url";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-dotenv.config();
+
 import videoRouter from "./routes/videoRoutes.js";
 import config from "./config/index.js";
-import { error } from "console";
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,7 +37,7 @@ app.use((req, res, next) => {
 });
 
 mongoose
-  .connect(config.mongo_uri)
+  .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("connected to mongoDB.");
   })

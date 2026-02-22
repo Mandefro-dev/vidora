@@ -10,11 +10,11 @@ const videoSchmea = new mongoose.Schema(
     title: {
       type: String,
       required: true,
-      status: {
-        type: String,
-        enum: ["processing", "ready", "failed"],
-        default: "processing",
-      },
+    },
+    status: {
+      type: String,
+      enum: ["processing", "ready", "failed"],
+      default: "processing",
     },
     url: { type: String },
     visibility: {

@@ -26,7 +26,7 @@ export const uploadVideo = async (req, res) => {
     const hlsUrl = `http://localhost:8000/hls/${videoId}/index.m3u8`;
 
     const newVideo = new Video({
-      id: videoId,
+      videoId: videoId,
       title: result.file.replace("raw-", "").replace(".mp4", ""),
       status: "processing",
       url: hlsUrl,
