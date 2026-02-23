@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { FiPlay, FiClock, FiCheckCircle, FiFilm, FiX } from "react-icons/fi";
-import { AnimatePresence } from "framer-motion";
-import { motion } from "framer-motion";
+import {
+  FiPlay,
+  FiClock,
+  FiCheckCircle,
+  FiFilm,
+  FiX,
+  FiCopy,
+  FiSettings,
+  FiBarChart2,
+  FiLock,
+} from "react-icons/fi";
+import { AnimatePresence, motion } from "framer-motion";
+import axios from "axios";
 import Uploader from "./uploader";
 import VideoPlayer from "./VideoPlayer";
 import { fetchVideos } from "./api";
@@ -11,46 +21,70 @@ function App() {
   const [videos, setVideos] = useState([]);
   const [activeVideo, setActiveVideo] = useState(null);
 
-  //  Processing -> Ready
+  const [activeTab, setActiveTab] = useState("player");
+  const [domains, setDomains] = useState("");
+  const [visibility, setVisibility] = useState("public");
+
+  // Polling videos
   useEffect(() => {
     const loadVideos = async () => {
       try {
         const data = await fetchVideos();
-        // Simple check to avoid unnecessary re-renders would go here in production
         setVideos(data);
       } catch (e) {
         console.error("Fetch error", e);
       }
     };
 
-    loadVideos(); // Initial load
-    const interval = setInterval(loadVideos, 5000); // Poll every 5s
+    loadVideos();
+    const interval = setInterval(loadVideos, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  // Handle immediate UI update after upload
   const handleUploadSuccess = (newVideo) => {
     setVideos((prev) => [newVideo, ...prev]);
   };
 
+  // When video is opened
+  useEffect(() => {
+    if (activeVideo) {
+      setDomains(activeVideo.allowedDomains?.join(", ") || "");
+      setVisibility(activeVideo.visibility || "public");
+      setActiveTab("player");
+    }
+  }, [activeVideo]);
+
+  const handleSaveSettings = async () => {
+    const domainArray = domains
+      .split(",")
+      .map((d) => d.trim())
+      .filter(Boolean);
+
+    try {
+      await axios.put(
+        `http://localhost:8000/api/videos/${activeVideo.id}/settings`,
+        {
+          visibility,
+          allowedDomains: domainArray,
+        },
+      );
+
+      alert("✨ Video settings locked and saved!");
+    } catch (error) {
+      console.error("Failed to save", error);
+    }
+  };
+
   return (
     <div className="app-container">
-      {/* Header */}
       <header className="header">
         <div className="brand">
-          <span style={{ marginRight: "10px" }}>⚡</span>
-          NodeStream{" "}
-          <span style={{ color: "white", fontWeight: 300, opacity: 0.5 }}>
-            Pro
-          </span>
+          ⚡ NodeStream <span style={{ opacity: 0.5 }}>Pro</span>
         </div>
-        <div className="badge ready">v1.0.0 Live</div>
       </header>
 
-      {/* upload Component */}
       <Uploader onUploadSuccess={handleUploadSuccess} />
 
-      {/* Video Gallery Grid */}
       <h2 className="section-title">
         <FiFilm /> Your Library
       </h2>
@@ -61,29 +95,17 @@ function App() {
             <motion.div
               key={video.id}
               layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9 }}
               className="card"
               onClick={() => video.status === "ready" && setActiveVideo(video)}
             >
-              {/* Thumbnail / Status Icon */}
               <div className="card-thumb">
                 {video.status === "ready" ? (
-                  <div className="play-overlay">
-                    <FiPlay size={24} color="white" />
-                  </div>
+                  <FiPlay size={24} />
                 ) : (
-                  <div style={{ textAlign: "center", color: "var(--warning)" }}>
-                    <FiClock className="spin" size={32} />
-                    <div style={{ fontSize: "0.8rem", marginTop: "10px" }}>
-                      Processing...
-                    </div>
-                  </div>
+                  <FiClock className="spin" size={32} />
                 )}
               </div>
 
-              {/* Card Meta Data */}
               <div className="card-body">
                 <div className="card-title">
                   {video.title || "Untitled Video"}
@@ -106,65 +128,127 @@ function App() {
         </AnimatePresence>
       </div>
 
-      {/* Video Player Modal */}
+      {/* MODAL */}
       <AnimatePresence>
         {activeVideo && (
           <motion.div
             className="modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
             onClick={() => setActiveVideo(null)}
           >
             <motion.div
-              className="modal-content"
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+              className="modal-content pro-modal"
               onClick={(e) => e.stopPropagation()}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  padding: "20px",
-                  alignItems: "center",
-                }}
-              >
-                <h3 style={{ margin: 0 }}>{activeVideo.title}</h3>
+              {/* Tabs */}
+              <div className="modal-tabs">
                 <button
-                  onClick={() => setActiveVideo(null)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "white",
-                    cursor: "pointer",
-                  }}
+                  onClick={() => setActiveTab("player")}
+                  className={activeTab === "player" ? "active" : ""}
                 >
-                  <FiX size={24} />
+                  Player
+                </button>
+                <button
+                  onClick={() => setActiveTab("settings")}
+                  className={activeTab === "settings" ? "active" : ""}
+                >
+                  <FiSettings /> Security
+                </button>
+                <button
+                  onClick={() => setActiveTab("share")}
+                  className={activeTab === "share" ? "active" : ""}
+                >
+                  Share & Embed
                 </button>
               </div>
 
-              <VideoPlayer src={activeVideo.url} />
+              {/* PLAYER TAB */}
+              {activeTab === "player" && (
+                <div className="tab-pane">
+                  <VideoPlayer
+                    src={`http://localhost:8000/api/videos/play/${activeVideo.id}`}
+                  />
 
-              <div
-                style={{
-                  padding: "20px",
-                  color: "var(--text-muted)",
-                  fontSize: "0.9rem",
-                }}
-              >
-                Stream URL:{" "}
-                <code
-                  style={{
-                    background: "rgba(255,255,255,0.1)",
-                    padding: "4px",
-                    borderRadius: "4px",
-                  }}
-                >
-                  {activeVideo.url}
-                </code>
-              </div>
+                  <div className="analytics-bar">
+                    <FiBarChart2 /> <strong>{activeVideo.views || 0}</strong>{" "}
+                    Lifetime Views
+                  </div>
+                </div>
+              )}
+
+              {/* SETTINGS TAB */}
+              {activeTab === "settings" && (
+                <div className="tab-pane settings-pane">
+                  <h3>
+                    <FiLock /> Video Security
+                  </h3>
+
+                  <label>Visibility</label>
+                  <select
+                    value={visibility}
+                    onChange={(e) => setVisibility(e.target.value)}
+                  >
+                    <option value="public">🌍 Public (Anyone with link)</option>
+                    <option value="private">🔒 Private (Domain Locked)</option>
+                  </select>
+
+                  {visibility === "private" && (
+                    <div className="domain-lock-box">
+                      <label>Allowed Domains</label>
+                      <input
+                        type="text"
+                        value={domains}
+                        onChange={(e) => setDomains(e.target.value)}
+                      />
+                    </div>
+                  )}
+
+                  <button className="btn-primary" onClick={handleSaveSettings}>
+                    Save Changes
+                  </button>
+                </div>
+              )}
+
+              {/* SHARE TAB */}
+              {activeTab === "share" && (
+                <div className="tab-pane share-pane">
+                  <h3>Share your video</h3>
+
+                  <div className="copy-group">
+                    <input
+                      readOnly
+                      value={`http://localhost:5173/watch/${activeVideo.id}`}
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(
+                          `http://localhost:5173/watch/${activeVideo.id}`,
+                        );
+                        alert("Copied to clipboard! 📋");
+                      }}
+                    >
+                      <FiCopy /> Copy
+                    </button>
+                  </div>
+
+                  <div className="copy-group">
+                    <textarea
+                      readOnly
+                      rows="3"
+                      value={`<iframe src="http://localhost:5173/embed/${activeVideo.id}" width="100%" height="400px" frameborder="0" allowfullscreen></iframe>`}
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(
+                          `<iframe src="http://localhost:5173/embed/${activeVideo.id}" width="100%" height="400px" frameborder="0" allowfullscreen></iframe>`,
+                        );
+                        alert("Embed code copied! 🚀");
+                      }}
+                    >
+                      <FiCopy /> Copy
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}

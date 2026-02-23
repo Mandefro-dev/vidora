@@ -55,3 +55,48 @@ export const getAllVideos = async (req, res) => {
     res.status(500).json({ error: "could not fetch videos" });
   }
 };
+
+export const getSecureVideo = async (req, res) => {
+  try {
+    const { videoId } = req.params;
+    const video = await Video.findOne({ videoId });
+    if (!video || video.status !== "ready") {
+      return res.status(404).json({
+        error: "Video not found or not ready for streaming.",
+      });
+    }
+    if (video.visibility === "public") {
+      return res.redirect(video.url);
+    }
+    //domain locking
+    const requestOrigin = req.headers.origin || req.headers.referer;
+    if (video.visibility === "private") {
+      if (video.allowedDomains && video.allowedDomains.length > 0) {
+        const clearOrigin = requestOrigin
+          ? new URL(requestOrigin).hostname
+          : "";
+        const isAllowed = video.allowedDomains.some((domain) =>
+          cleanOrigin.includes(domain),
+        );
+
+        if (!isAllowed) {
+          console.log(`Blocke unauthorized play attempet from: ${cleanOrigin}`);
+          return res.status(403).json({
+            error:
+              "This video can not be played on this website(Domain locked)",
+          });
+        }
+      }
+    }
+    //increment views
+
+    await Video.updateOne({ videoId }, { $inc: { views: 1 } });
+
+    return res.redirect(video.url);
+  } catch (error) {
+    console.log("playback error", error);
+    res.status(500).json({
+      error: "Server error while during playback verification.",
+    });
+  }
+};

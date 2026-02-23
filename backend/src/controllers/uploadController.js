@@ -2,6 +2,8 @@ import { handleFileUpload } from "../services/uploadService.js";
 import { v4 as uuidv4 } from "uuid";
 import { convertToHLS } from "../services/transcodeService.js";
 import { addVideo, updateVideoStatus } from "../services/dbService.js";
+import { uploadDirectoryToS3 } from "../services/s3Service.js";
+import fs from "fs";
 import path from "path";
 import { title } from "process";
 import Video from "../models/Video.js";
@@ -29,7 +31,7 @@ export const uploadVideo = async (req, res) => {
       videoId: videoId,
       title: result.file.replace("raw-", "").replace(".mp4", ""),
       status: "processing",
-      url: hlsUrl,
+      url: "",
       visibilty: "public",
     });
     await newVideo.save();
@@ -45,7 +47,28 @@ export const uploadVideo = async (req, res) => {
         const inputPath = result.path;
 
         await convertToHLS(inputPath, videoId);
-        await Video.findOneAndUpdate({ videoId: videoId }, { status: "ready" });
+
+        const hlsFolderPath = path.join(
+          process.cwd(),
+          "uploads",
+          "hls",
+          videoId,
+        );
+        const cloudUrl = await uploadDirectoryToS3(
+          hlsFolderPath,
+          `hls/${videoId}`,
+        );
+
+        await Video.findOneAndUpdate(
+          { videoId: videoId },
+          { status: "ready", url: cloudUrl },
+        );
+
+        console.log(`[DB] Video is Ready at Clould URL:${cloudUrl}`);
+        fs.rmSync(result.path);
+        fs.rmSync(hlsFolderPath, { recursive: true, force: true });
+        console.log(`[Cleanup] Removed local files for: ${videoId}`);
+
         // await updateVideoStatus(videoId, "ready");
 
         console.log(`[Background] HLS conversion finished for: ${videoId}`);

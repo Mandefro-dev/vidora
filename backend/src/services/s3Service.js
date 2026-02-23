@@ -8,12 +8,13 @@ dotenv.config();
 
 // Initialize the S3 Client pointed at Cloudflare R2
 const s3 = new S3Client({
-  region: "auto",
+  region: "eu-west-1",
   endpoint: process.env.R2_ENDPOINT,
   credentials: {
     accessKeyId: process.env.R2_ACCESS_KEY,
     secretAccessKey: process.env.R2_SECRET_KEY,
   },
+  forcePathStyle: true, // Required for R2
 });
 
 export const uploadDirectoryToS3 = async (dirPath, s3FolderPrefix) => {

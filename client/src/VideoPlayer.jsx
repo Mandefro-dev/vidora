@@ -3,39 +3,49 @@ import Hls from "hls.js";
 
 const VideoPlayer = ({ src }) => {
   const videoRef = useRef(null);
-  const [levels, setLevels] = useState([]); // Store available qualities
-  const [currentLevel, setCurrentLevel] = useState(-1); // -1 is "Auto"
   const hlsInstance = useRef(null);
-  // const hlsRef = useRef(null);
+
+  const [qualities, setQualities] = useState([]);
+  const [currentQuality, setCurrentQuality] = useState(-1); // -1 = Auto
 
   useEffect(() => {
     const video = videoRef.current;
     if (!src || !video) return;
 
-    let hls; // Keep instance in the effect scope for cleanup
+    let hls;
 
     if (Hls.isSupported()) {
-      //  Instantiate only if supported
       hls = new Hls({
         manifestLoadingMaxRetry: 10,
         manifestLoadingRetryDelay: 1000,
       });
+
       hlsInstance.current = hls;
 
       hls.loadSource(src);
       hls.attachMedia(video);
 
+      // When manifest loads (FFmpeg qualities detected)
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        // Handle autoplay policies gracefully
-        setLevels(hls.levels);
-        video
-          .play()
-          .catch((err) => console.log("User must click play manually", err));
-      });
-      hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
-        setCurrentLevel(hls.currentLevel);
+        const availableQualities = hls.levels.map((level, index) => ({
+          height: level.height,
+          bitrate: level.bitrate,
+          index,
+        }));
+
+        setQualities(availableQualities);
+
+        video.play().catch(() => {
+          console.log("User interaction required to play.");
+        });
       });
 
+      // Listen for manual quality switch
+      hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
+        setCurrentQuality(hls.autoLevelEnabled ? -1 : data.level);
+      });
+
+      // Error handling (your original logic preserved)
       hls.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {
           switch (data.type) {
@@ -51,60 +61,66 @@ const VideoPlayer = ({ src }) => {
           }
         }
       });
-    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      //  Fallback for native HLS (Safari)
+    }
+    // Safari native HLS fallback
+    else if (video.canPlayType("application/vnd.apple.mpegurl")) {
       video.src = src;
       video.addEventListener("loadedmetadata", () => {
         video.play().catch(() => {});
       });
     }
 
-    // Perfect cleanup on modal close
     return () => {
-      if (hls) {
-        hls.destroy();
-      }
+      if (hls) hls.destroy();
     };
   }, [src]);
-  const changeQuality = (newLevel) => {
+
+  const changeQuality = (levelIndex) => {
     if (hlsInstance.current) {
-      // Set the manual quality level
-      hlsInstance.current.currentLevel = newLevel;
-      setCurrentLevel(newLevel);
+      hlsInstance.current.currentLevel = levelIndex;
+      setCurrentQuality(levelIndex);
     }
   };
 
   return (
-    <div
-      className="video-wrapper"
-      style={{ position: "relative", background: "#000" }}
-    >
+    <div className="player-container" style={{ position: "relative" }}>
       <video
         ref={videoRef}
         controls
         crossOrigin="anonymous"
-        style={{ width: "100%" }}
+        style={{ width: "100%", background: "#000" }}
       />
 
-      {/* Quality Selector UI */}
-      {levels.length > 0 && (
-        <div className="quality-selector">
-          <span className="quality-label">Quality:</span>
-          <button
-            onClick={() => changeQuality(-1)}
-            className={`quality-btn ${currentLevel === -1 ? "active" : ""}`}
+      {qualities.length > 0 && (
+        <div
+          className="quality-selector"
+          style={{
+            position: "absolute",
+            bottom: "50px",
+            right: "10px",
+            background: "rgba(0,0,0,0.8)",
+            padding: "10px",
+            borderRadius: "8px",
+            zIndex: 10,
+          }}
+        >
+          <select
+            value={currentQuality}
+            onChange={(e) => changeQuality(Number(e.target.value))}
+            style={{
+              background: "transparent",
+              color: "white",
+              border: "none",
+              outline: "none",
+            }}
           >
-            Auto
-          </button>
-          {levels.map((level, index) => (
-            <button
-              key={index}
-              onClick={() => changeQuality(index)}
-              className={`quality-btn ${currentLevel === index ? "active" : ""}`}
-            >
-              {level.height}p
-            </button>
-          ))}
+            <option value={-1}>Auto</option>
+            {qualities.map((q) => (
+              <option key={q.index} value={q.index}>
+                {q.height}p
+              </option>
+            ))}
+          </select>
         </div>
       )}
     </div>
