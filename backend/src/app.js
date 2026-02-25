@@ -42,7 +42,10 @@ mongoose
     console.log("connected to mongoDB.");
   })
   .catch((error) => console.error("Mongodb connection error", error.message));
-
+app.use(express.static(path.join(__dirname, "dist")));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
 app.use("/hls", express.static(path.join(__dirname, "../uploads/hls")));
 
 app.use(

@@ -322,6 +322,151 @@ video {
 .input-with-button button:hover {
   background: #444;
 }
+
+/* --- Missing Animations & Utils --- */
+.spin {
+  animation: spin 1.5s linear infinite;
+}
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Top Nav Search Bar --- */
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: var(--card-bg);
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.search-bar input {
+  background: transparent;
+  border: none;
+  color: white;
+  margin-left: 10px;
+  outline: none;
+  width: 250px;
+}
+
+/* --- Toast Notifications --- */
+.toast {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--success);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  z-index: 9999;
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+}
+
+/* --- Modal Updates --- */
+.modal-content {
+  position: relative;
+  padding: 20px;
+}
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.close-btn:hover {
+  color: white;
+}
+.tab-pane {
+  padding: 20px 0;
+}
+.analytics-bar {
+  margin-top: 15px;
+  padding: 15px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+/* --- Custom Pro Player UI --- */
+.player-container {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.quality-wrapper {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.gear-btn {
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: blur(4px);
+}
+.quality-badge {
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+.quality-menu {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 10px;
+  background: rgba(0, 0, 0, 0.9);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 100px;
+}
+.quality-menu button {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 8px;
+  text-align: right;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.quality-menu button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+.quality-menu button.active {
+  color: var(--primary);
+  font-weight: bold;
+}
 @keyframes fadeIn {
   from {
     opacity: 0;

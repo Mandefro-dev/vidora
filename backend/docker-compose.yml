@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  # 1. Your Node.js + FFmpeg Backend
+  backend:
+    build: .
+    container_name: nodestream_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      # Notice the hostname is 'database', which matches the service name below!
+      - MONGO_URI=mongodb://database:27017/nodestream
+      - REDIS_URL=redis://cache:6379
+      # (Your Supabase keys should go in a local .env file, Docker will read them if configured, but for now we can rely on standard env injection)
+    env_file:
+      - .env
+    volumes:
+      # We map your local folders to the container so you can see the files being processed
+      - ./uploads:/app/uploads
+      - ./processed:/app/processed
+    depends_on:
+      - database
+      - cache
+
+  # 2. The MongoDB Database
+  database:
+    image: mongo:latest
+    container_name: nodestream_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      # ADVANCED: Persistent Volume. Without this, your database wipes clean every time Docker restarts!
+      - mongo_data:/data/db
+
+  # 3. Redis (The Cache/Queue System for our next upgrade)
+  cache:
+    image: redis:alpine
+    container_name: nodestream_redis
+    ports:
+      - "6379:6379"
+
+# Define the persistent volume
+volumes:
+  mongo_data:
