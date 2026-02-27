@@ -15,8 +15,8 @@ services:
       - .env
     volumes:
       # We map your local folders to the container so you can see the files being processed
-      - ./uploads:/app/uploads
-      - ./processed:/app/processed
+      - ./backend/uploads:/app/uploads
+      - ./backend/processed:/app/processed
     depends_on:
       - database
       - cache

@@ -1,6 +1,7 @@
 
 FROM node:20-bookworm-slim AS build-stage
-WORKDIR /client
+WORKDIR /app/client
+
 COPY ./client/package*.json ./
 RUN npm install
 COPY ./client ./
@@ -18,23 +19,20 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the working directory inside the container
-WORKDIR /app
+WORKDIR /app/backend
 
 # Copy package.json and package-lock.json first
-
-
-COPY package*.json ./
-
-# Install dependencies
+COPY ./backend/package*.json ./
 RUN npm install
+COPY ./backend ./
 
-# Copy the rest of your backend code
-COPY . .
+
 
 # Create directories for uploads and processed videos so they exist when the app starts
+COPY --from=build-stage /app/client/dist ./dist
 RUN mkdir -p uploads processed
 
-COPY --from=build-stage /client/dist ./dist
+
 
 # Expose the port your backend runs on
 EXPOSE 8000
