@@ -14,7 +14,7 @@ FROM node:20-bookworm-slim
 
 # We update the package list, install ffmpeg, and clear the apt cache to keep the image size tiny.
 RUN apt-get update && \
-    apt-get install -y ffmpeg && \
+    apt-get install -y --no-install-recommends ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

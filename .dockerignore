@@ -1,10 +1,12 @@
 node_modules
 npm-debug.log
 .env
-uploads/
-processed/
+backend/uploads/
+
+backend/processed/
 .git
 .gitignore
 
-frontend/node_modules
+client/node_modules
 backend/node_modules
+client/dist
