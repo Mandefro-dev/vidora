@@ -42,10 +42,10 @@ mongoose
     console.log("connected to mongoDB.");
   })
   .catch((error) => console.error("Mongodb connection error", error.message));
-app.use(express.static(path.join(__dirname, "dist")));
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
+//api router
+app.use("/api", videoRouter);
+
+//statci video files
 app.use("/hls", express.static(path.join(__dirname, "../uploads/hls")));
 
 app.use(
@@ -53,11 +53,15 @@ app.use(
   express.static(path.join(__dirname, "../uploads/processed")),
 );
 
-app.use("/api", videoRouter);
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "/assets/index.html"));
+//frotnend
+
+const distPath = path.join(__dirname, "../dist");
+app.use(express.static(distPath));
+
+app.use((req, res) => {
+  res.sendFile(path.join(distPath, "index.html"));
 });
 
-app.listen(config.port, () => {
+app.listen(config.port, "0.0.0.0", () => {
   console.log(`running on port ${config.port}`);
 });

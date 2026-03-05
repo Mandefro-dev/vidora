@@ -83,7 +83,7 @@ function App() {
   };
 
   const filteredVideos = videos.filter((v) =>
-    v.title.toLowerCase().includes(searchQuery.toLowerCase()),
+    (v.title || "").toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
