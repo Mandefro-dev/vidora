@@ -9,5 +9,7 @@ videoRouter.get("/stream", streamVideo);
 videoRouter.post("/upload", uploadVideo);
 videoRouter.get("/videos", getAllVideos);
 videoRouter.get("/play/:videoId", getSecureVideo);
+// You'll need to create this controller function too!
+videoRouter.put("/videos/:videoId/settings", getSecureVideo);
 
 export default videoRouter;
