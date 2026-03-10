@@ -14,15 +14,18 @@
 }
 
 body {
-  background-color: var(--bg-dark);
-  color: var(--text-main);
-  font-family:
-    "Inter",
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
-  margin: 0;
-  -webkit-font-smoothing: antialiased;
+  background-color: #020617; /* Tailwind's slate-950 */
+  color: #f8fafc;
+  font-family: "Inter", system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* A reusable class for our glass cards */
+.glass-card {
+  background: rgba(30, 41, 59, 0.4); /* slate-800 with opacity */
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1.5rem;
 }
 
 .app-container {

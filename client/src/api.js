@@ -1,7 +1,8 @@
 import axios from "axios";
 
-const API_BASE =
-  import.meta.env.MODE === "production" ? "/api" : "http://localhost:8000/api";
+// const API_BASE =
+//   import.meta.env.MODE === "production" ? "/api" : "http://localhost:8000/api";
+const API_BASE = "http://localhost:8000/api";
 
 export const fetchVideos = async () => {
   const response = await axios.get(`${API_BASE}/videos`);
